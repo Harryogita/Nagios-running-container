@@ -4,12 +4,12 @@
 #username=ec2-user then switch to root
 
 #create your dockerfile working dir
-mkdir dockerfile
+#mkdir dockerfile
 
 #Lets start with real task here onwards.
 
 #create Dockerfile ,note name is case sensitive.
-vi Dockerfile.yml
+#vi Dockerfile.yml
 
 #Download the base image with latest tag and Update your repo with latest pkgs
 FROM centos:latest
@@ -21,16 +21,17 @@ RUN yum install -y net-snmp net-snmp-utils epel-release gcc glibc glibc-common w
 
 # Create nagios user,nagcmd group,then add both nagios & apache user to nagcmd group
 RUN useradd -m -s /bin/nologin nagios
-RUN grep -i 'apache|nagios' /etc/groups
-RUN usermod -a -G nagios apache
+#RUN grep -i 'apache|nagios' /etc/groups
+RUN usermod -a -G nagios 
+RUN usermod -a -G apache
 
 
 # Download source code of nagios-core and untar it
-RUN wget https://github.com/NagiosEnterprises/nagioscore/archive/nagios-4.4.3.tar.gz
+RUN wget https://assets.nagios.com/downloads/nagioscore/releases/nagios-4.4.5.tar.gz
 RUN tar xzf nagioscore-4.4.3.tar.gz
 
 # Download source code of nagios-core and untar it 
-RUN wget https://github.com/NagiosEnterprises/nagios-plugin/archive/nagios-plugin-2.3.1.tar.gz
+RUN wget https://nagios-plugins.org/download/nagios-plugins-2.3.1.tar.gz 
 RUN tar xzf nagios-plugin-2.3.1.tar.gz
 
 
@@ -43,10 +44,11 @@ COPY . /nagios/
 WORKDIR /nagios/nagioscore-nagios-4.4.3/
 
 # Compile & Install Binaries
-RUN ./configure
+RUN ./configure --with-command-group=nagcmd
 RUN make all
 RUN make install
 # Install Command-Mode & conf files 
+RUN make install-init
 RUN make install-commandmode
 RUN make install-config
 
@@ -55,20 +57,31 @@ RUN make install-config
 RUN make install-webconf
 
 # Create nagiosadmin User Account
-RUN htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin
+RUN htpasswd -s -c /usr/local/nagios/etc/htpasswd.users nagiosadmin
+
 
 
 # Set working directory for nagios plugin
 WORKDIR /nagios/nagios-plugins-release-2.2.3/
 
 # Install Nagios plugins
-RUN ./configure
-RUN make
+RUN ./configure --with-nagios-user=nagios --with-nagios-group=nagcmd
+
+RUN make all
 RUN make install
 
-# Install service-daemon
-RUN make install-daemoninit
+RUN /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+
+RUN systemctl restart htppd.service
 RUN systemctl enable httpd.service
+RUN systemctl restart nagios.service
+RUN systemctl enable nagios.service
+
+
+
+# Install service-daemon
+#RUN make install-daemoninit
+#RUN systemctl enable httpd.service
 
 
 # Start Apache and Nagios
