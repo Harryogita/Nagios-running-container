@@ -1,15 +1,13 @@
-#create 3 ec2-instances on AWS and ssh to any 
-#One of it via. Converting .pem to .ppk key using
-#Public IP or DNS. 
-#username=ec2-user then switch to root
+#create 3 ec2-instances on AWS and ssh to any One of it via. Converting .pem to .ppk key using Public IP or DNS. 
+#username=ubuntu then switch to root
 
 #create your dockerfile working dir
 #mkdir dockerfile
 
 #Lets start with real task here onwards.
 
-#create Dockerfile ,note name is case sensitive.
-#vi Dockerfile.yml
+#create Dockerfile ,note name is case sensitive on your host-OS
+#vim Dockerfile
 
 #Download the base image with latest tag and Update your repo with latest pkgs
 FROM centos:latest
